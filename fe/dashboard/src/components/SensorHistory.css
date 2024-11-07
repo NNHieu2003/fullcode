@@ -1,0 +1,73 @@
+.historyContainer {
+  padding: 20px;
+  max-width: 100%;
+  margin: 0 auto; 
+}
+
+.historyTitle {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.searchContainer {
+  display: flex;
+  justify-content: center;
+  gap: 10px; 
+  margin-bottom: 20px;
+}
+
+.text{
+  font-size: 20px;
+}
+
+/* .searchContainer label {
+  font-size: 140px;
+} */
+
+.searchContainer input,
+.searchContainer button {
+  padding: 5px;
+  font-size: 14px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: rgb(231, 220, 231);
+}
+
+.tableHeader {
+  background-color: #f0f0f0;
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.tableCell {
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.alert {
+  color: red;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.pagination span {
+  font-size: 14px;
+}

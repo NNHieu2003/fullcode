@@ -1,0 +1,172 @@
+.container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f9e9f6;
+}
+  
+.alert {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.title{
+  font-size: 30px;
+  text-align: center;
+}
+  
+.mainGrid {
+  display: flex;
+  justify-content: space-between;
+}
+  
+.leftPanel {
+  flex: 1;
+  margin-right: 20px;
+}
+  
+.rightPanel {
+  width: 300px; 
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px; 
+  background-color: #98d2ef; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+}
+  
+.grid {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+  
+.card {
+  flex: 1;
+  margin-right: 10px;
+  background-color: #6dee5c;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  text-align: center;
+}
+
+.card.temperature {
+  background-color: #f04e4e;
+}
+
+.card.humidity {
+  background-color: #3995f1; 
+}
+
+.card.light {
+  background-color: rgba(248, 232, 7, 0.674);
+}
+  
+.cardTitle {
+  margin: 0;
+}
+  
+.cardValue {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.chartContainer {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  width: 100%; 
+  height: 400px; 
+  max-width: 100%; 
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.chartContainer canvas {
+    width: 48%;
+    height: auto; 
+}
+
+.controlTitle {
+  text-align: center;
+  font-size: 1.5rem; 
+  margin-bottom: 20px; 
+  color: #333; 
+}
+
+.ledImage {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+}
+
+.ledControl {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ledItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; 
+  padding: 20px;
+  border: 1px solid #ddd; 
+  border-radius: 10px; 
+  background-color: #c2cfd6; 
+  width: 200px; 
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+}
+  
+.warningLed {
+  margin-top: 10px;
+  width: 100px;
+  height: 100px;
+}
+  
+.redled {
+  width: 100%;
+  height: 100%;
+  animation: blink 1s infinite;
+}
+  
+.bluered {
+  width: 100%;
+  height: 100%;
+}
+  
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.ledImage.led-off {
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+
+.ledImage.fan-on {
+  animation: rotateFan 0.6s linear infinite;
+}
+
+@keyframes rotateFan {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

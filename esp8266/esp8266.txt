@@ -1,0 +1,185 @@
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <BH1750.h>
+#include <ArduinoJson.h>
+
+#define DHTPIN D2
+#define DHTTYPE DHT11
+#define led D5
+#define fan D6
+#define warning_led D7 
+
+const char* ssid = "VIETTEL_GPON";
+const char* password = "0355097803";
+const char* mqtt_server = "192.168.1.7";
+const char* mqtt_user = "hieu";
+const char* mqtt_pass = "1234";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+DHT dht(DHTPIN, DHTTYPE);
+BH1750 lightMeter;
+
+long lastMsg = 0;
+char msg[100];
+
+unsigned long lastWarningToggle = 0;
+const long warningFlashInterval = 500;
+bool warningLedState = false;
+bool isWarningActive = false;
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+  bool ledState = (char)payload[0] == '1';
+
+  if (strcmp(topic, "esp8266/led") == 0) {
+    Serial.println("Controlling led");
+    digitalWrite(led, ledState ? LOW : HIGH);
+    Serial.println(ledState ? "led ON" : "led OFF");
+    publishLedAction("led", ledState);
+  } 
+  else if (strcmp(topic, "esp8266/fan") == 0) {
+    Serial.println("Controlling fan");
+    digitalWrite(fan, ledState ? LOW : HIGH);
+    Serial.println(ledState ? "fan ON" : "fan OFF");
+    publishLedAction("fan", ledState);
+  } 
+  else if (strcmp(topic, "esp8266/all_leds") == 0) {
+    Serial.println("Controlling All LEDs");
+    digitalWrite(led, ledState ? LOW : HIGH);
+    digitalWrite(fan, ledState ? LOW : HIGH);
+    Serial.println(ledState ? "All LEDs ON" : "All LEDs OFF");
+    publishLedAction("ALL", ledState);
+  }
+}
+
+void publishLedAction(const char* ledName, bool state) {
+  StaticJsonDocument<100> doc;
+  doc["led"] = ledName;
+  doc["status"] = state ? "ON" : "OFF";
+  
+  char jsonBuffer[100];
+  serializeJson(doc, jsonBuffer);
+  client.publish("esp8266/action", jsonBuffer);
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    if (client.connect("ESP8266Client", mqtt_user, mqtt_pass)) {
+      Serial.println("connected");
+      client.subscribe("esp8266/led");
+      client.subscribe("esp8266/fan");
+      client.subscribe("esp8266/all_leds");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  setup_wifi();
+  client.setServer(mqtt_server, 1888);
+  client.setCallback(callback);
+
+  pinMode(led, OUTPUT);
+  pinMode(fan, OUTPUT);
+  pinMode(warning_led, OUTPUT);
+  digitalWrite(led, HIGH);
+  digitalWrite(fan, HIGH);
+  digitalWrite(warning_led, LOW);
+
+  dht.begin();
+  Wire.begin(D1, D3);
+  lightMeter.begin();
+}
+
+void publishWarningLedState(bool state) {
+  StaticJsonDocument<100> doc;
+  doc["led"] = "warning";
+  doc["status"] = state ? "ON" : "OFF";
+  
+  char jsonBuffer[100];
+  serializeJson(doc, jsonBuffer);
+  client.publish("esp8266/warning", jsonBuffer);
+  Serial.println("Warning state published: " + String(jsonBuffer));
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  unsigned long now = millis();
+  if (now - lastMsg > 2000) {
+    lastMsg = now;
+
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+    float lux = lightMeter.readLightLevel();
+    int dirt = random(1, 101); // Generate random dirt value between 1 and 100
+
+    StaticJsonDocument<200> doc;
+    doc["device_id"] = "DHT11";
+    doc["temperature"] = t;
+    doc["humidity"] = h;
+    doc["light"] = lux;
+    doc["dirt"] = dirt;
+
+    char jsonBuffer[512];
+    serializeJson(doc, jsonBuffer);
+
+    client.publish("esp8266/sensor", jsonBuffer);
+    Serial.println("Published: " + String(jsonBuffer));
+
+    bool currentWarningState = (t > 100 || h > 100 || lux > 1000 || dirt > 70);
+
+    if (currentWarningState != isWarningActive) {
+      isWarningActive = currentWarningState;
+      publishWarningLedState(isWarningActive);
+      Serial.println(isWarningActive ? "Warning activated" : "Warning deactivated");
+    }
+  }
+
+  if (isWarningActive) {
+    if (now - lastWarningToggle >= warningFlashInterval) {
+      lastWarningToggle = now;
+      warningLedState = !warningLedState;
+      digitalWrite(warning_led, warningLedState ? HIGH : LOW);
+    }
+  } else {
+    digitalWrite(warning_led, LOW);
+  }
+}
